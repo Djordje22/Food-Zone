@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import Card from '../UI/Card';
 import MealItem from './MealItem/MealItem';
 import classes from './AvailableMeals.module.css';
+import { MEALS_URL } from '../../config';
 
 const AvailableMeals = () => {
   const [meals, setMeals] = useState([]);
@@ -11,15 +12,17 @@ const AvailableMeals = () => {
 
   useEffect(() => {
     const fetchMeals = async () => {
-      const response = await fetch(
-        'https://food-zone-9b874-default-rtdb.firebaseio.com/meals.json'
-      );
+      const response = await fetch(MEALS_URL);
 
       if (!response.ok) {
-        throw new Error('Something went wrong!');
+        throw new Error(`Could not load the menu (HTTP ${response.status}).`);
       }
 
       const responseData = await response.json();
+
+      if (!responseData || typeof responseData !== 'object') {
+        throw new Error('The menu is empty.');
+      }
 
       const loadedMeals = [];
 

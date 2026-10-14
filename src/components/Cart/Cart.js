@@ -5,11 +5,13 @@ import CartItem from './CartItem';
 import classes from './Cart.module.css';
 import CartContext from '../../store/cart-context';
 import Checkout from './Checkout';
+import { ORDERS_URL } from '../../config';
 
 const Cart = (props) => {
   const [isCheckout, setIsCheckout] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [didSubmit, setDidSubmit] = useState(false);
+  const [submitError, setSubmitError] = useState(null);
   const cartCtx = useContext(CartContext);
 
   const totalAmount = `$${cartCtx.totalAmount.toFixed(2)}`;
@@ -29,16 +31,37 @@ const Cart = (props) => {
 
   const submitOrderHandler = async (userData) => {
     setIsSubmitting(true);
-    await fetch('https://food-zone-9b874-default-rtdb.firebaseio.com/orders.json', {
-      method: 'POST',
-      body: JSON.stringify({
-        user: userData,
-        orderedItems: cartCtx.items,
-      }),
-    });
-    setIsSubmitting(false);
-    setDidSubmit(true);
-    cartCtx.clearCart();
+    setSubmitError(null);
+
+    const order = {
+      user: userData,
+      orderedItems: cartCtx.items,
+      totalAmount: cartCtx.totalAmount,
+      createdAt: new Date().toISOString(),
+    };
+
+    try {
+      if (ORDERS_URL) {
+        const response = await fetch(ORDERS_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(order),
+        });
+        if (!response.ok) {
+          throw new Error(`Order could not be sent (HTTP ${response.status}).`);
+        }
+      } else {
+        // No backend configured: simulate the round trip so the UX still works.
+        await new Promise((resolve) => setTimeout(resolve, 800));
+        console.info('[Food-Zone] Demo mode, order not sent to a server:', order);
+      }
+      setDidSubmit(true);
+      cartCtx.clearCart();
+    } catch (error) {
+      setSubmitError(error.message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const cartItems = (
@@ -76,6 +99,7 @@ const Cart = (props) => {
         <span>Total Amount</span>
         <span>{totalAmount}</span>
       </div>
+      {submitError && <p className={classes.error}>{submitError}</p>}
       {isCheckout && (
         <Checkout onConfirm={submitOrderHandler} onCancel={props.onClose} />
       )}
@@ -89,10 +113,10 @@ const Cart = (props) => {
     <React.Fragment>
       <p>Successfully sent the order!</p>
       <div className={classes.actions}>
-      <button className={classes.button} onClick={props.onClose}>
-        Close
-      </button>
-    </div>
+        <button className={classes.button} onClick={props.onClose}>
+          Close
+        </button>
+      </div>
     </React.Fragment>
   );
 

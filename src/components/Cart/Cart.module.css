@@ -44,3 +44,9 @@
   background-color: #009344;
   color: white;
 }
+
+.error {
+  color: #b40000;
+  font-weight: bold;
+  text-align: center;
+}

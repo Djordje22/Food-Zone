@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "firebase": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "-p", "node@20",
+        "-p", "firebase-tools@latest",
+        "firebase", "mcp",
+        "--dir", "C:\\Users\\bojke\\OneDrive\\Documents\\Food-Zone"
+      ]
+    }
+  }
+}
